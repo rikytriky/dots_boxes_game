@@ -12,34 +12,43 @@ class GameState {
   GameMode gameMode = GameMode.cpu;
   int player1Score = 0;
   int player2Score = 0;
+  Edge? lastPlayedEdge;  
 
   GameState({this.rows = 8, this.cols = 8}) {
     _generateGrid();
-    _generateEdges();
+    //_generateEdges();
   }
 
   void _generateGrid() {
-    final rand = Random();
-    cells = List.generate(
-      rows,
-      (r) => List.generate(
-        cols,
-        (c) => Cell(row: r, col: c, isActive: true),
-      ),
+    // 1. Inizializza TUTTE celle attive
+    cells = List.generate(rows, (r) => 
+      List.generate(cols, (c) => Cell(row: r, col: c, isActive: true))
     );
 
-    // Irregolarità: 25% bordi, 10% interno per griglia grande
+    final rand = Random();
     for (var r = 0; r < rows; r++) {
       for (var c = 0; c < cols; c++) {
-        final isBorder = r == 0 || r == rows - 1 || c == 0 || c == cols - 1;
-        final deactivateChance = isBorder ? 0.25 : 0.10;  // ← PIÙ IRREGOLARE
-        if (rand.nextDouble() < deactivateChance) {
+        // Disattiva solo BORDI (non interne)
+        final isBorder = r <= 0 || r >= rows-1 || c <= 0 || c >= cols-1;
+        if (isBorder && rand.nextDouble() < 0.3) {
           cells[r][c].isActive = false;
         }
       }
     }
-  }
 
+    // 2. RIGENERA edge DOPO
+    _generateEdges();
+
+    // 3. AGGIORNA isActive: cella valida = supportata da 4 edge
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        final sides = _getFourSidesOfCell(r, c);
+        final allSidesExist = sides.every((e) => e != null);
+        cells[r][c].isActive = allSidesExist;
+      }
+    }
+
+  }
 
   void _generateEdges() {
     edges = [];
@@ -97,6 +106,7 @@ class GameState {
     if (edge.owner != null || !edge.isValid) return false;
     
     edge.owner = player;
+    lastPlayedEdge = edge;
     
     final closed = _checkClosedSquares(edge, player);  // ← Ora corretto
     
@@ -254,22 +264,21 @@ class GameState {
     }
   }
 
-
-  /// Ritorna i 4 edge di una cella (o null se non esistono)
   List<Edge?> _getFourSidesOfCell(int r, int c) {
     return [
-      // Top: orizzontale sopra la cella (riga r, colonna c)
+      // TOP: orizzontale SOPRA la cella (riga r, colonna c)
       findEdge(r, c, true),
-      // Bottom: orizzontale sotto la cella (riga r+1, colonna c)  
+      
+      // BOTTOM: orizzontale SOTTO la cella (riga r+1, colonna c)
       findEdge(r + 1, c, true),
-      // Left: verticale sinistra della cella (riga r, colonna c)
+      
+      // LEFT: verticale SINISTRA della cella (riga r, colonna c)
       findEdge(r, c, false),
-      // Right: verticale destra della cella (riga r, colonna r+1)
+      
+      // RIGHT: verticale DESTRA della cella (riga r, colonna c+1)
       findEdge(r, c + 1, false),
     ];
   }
-
-
 
   List<Edge> get freeEdges => edges.where((e) => e.isValid && e.owner == null).toList();
 }

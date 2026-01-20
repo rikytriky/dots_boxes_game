@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/edge.dart';
 import '../models/game_state.dart';
 import '../models/enums.dart';
 
@@ -31,20 +32,29 @@ class BoardPainter extends CustomPainter {
       ..strokeWidth = 5.0
       ..strokeCap = StrokeCap.round;
 
+    final lastMovePaint = Paint()
+      ..color = Colors.yellowAccent
+      ..strokeWidth = 7.0
+      ..strokeCap = StrokeCap.round;
+
+    final inactivePaint = Paint()
+      ..color = Colors.grey.shade300.withOpacity(0.5)
+      ..style = PaintingStyle.fill;
+
     // Disegna quadrati chiusi
     for (var r = 0; r < game.rows; r++) {
       for (var c = 0; c < game.cols; c++) {
         final cell = game.cells[r][c];
         //if (!cell.isActive) continue;
 
-        if (cell.owner != null) {
-          final rect = Rect.fromLTWH(
+        final rect = Rect.fromLTWH(
             (c + 0.5) * cellWidth,
             (r + 0.5) * cellHeight,
             cellWidth,
             cellHeight,
           );
 
+        if (cell.owner != null) {
           final fillPaint = Paint()
             ..color = cell.owner == Player.human1
                 ? Colors.red.withOpacity(0.3)
@@ -52,11 +62,15 @@ class BoardPainter extends CustomPainter {
             ..style = PaintingStyle.fill;
 
           canvas.drawRect(rect, fillPaint);
+        } else {
+          if (!cell.isActive) {
+            canvas.drawRect(rect, inactivePaint);
+          }
         }
       }
     }
 
-    // Disegna lati
+    // 1) Disegna tutti i lati normalmente
     for (final edge in game.edges) {
       if (!edge.isValid) continue;
 
@@ -69,23 +83,16 @@ class BoardPainter extends CustomPainter {
         paint = player2EdgePaint;
       }
 
-      Offset p1, p2;
-      if (edge.isHorizontal) {
-        final y = (edge.row + 0.5) * cellHeight;
-        final x1 = (edge.col + 0.5) * cellWidth;
-        final x2 = (edge.col + 1.5) * cellWidth;
-        p1 = Offset(x1, y);
-        p2 = Offset(x2, y);
-      } else {
-        final x = (edge.col + 0.5) * cellWidth;
-        final y1 = (edge.row + 0.5) * cellHeight;
-        final y2 = (edge.row + 1.5) * cellHeight;
-        p1 = Offset(x, y1);
-        p2 = Offset(x, y2);
-      }
-
-      canvas.drawLine(p1, p2, paint);
+      final segment = _edgeToSegment(edge, cellWidth, cellHeight);
+      canvas.drawLine(segment.$1, segment.$2, paint);
     }
+
+    // 2) Disegna per ultimo l'ULTIMA MOSSA, sopra gli altri
+    final last = game.lastPlayedEdge;
+    if (last != null) {
+      final segment = _edgeToSegment(last, cellWidth, cellHeight);
+      canvas.drawLine(segment.$1, segment.$2, lastMovePaint);
+    }    
 
     // Disegna SOLO punti che supportano lati validi
     Set<Offset> visibleDots = {};
@@ -117,6 +124,21 @@ class BoardPainter extends CustomPainter {
     }
 
   }
+
+  (Offset, Offset) _edgeToSegment(Edge edge, double cellWidth, double cellHeight) {
+    if (edge.isHorizontal) {
+      final y = (edge.row + 0.5) * cellHeight;
+      final x1 = (edge.col + 0.5) * cellWidth;
+      final x2 = (edge.col + 1.5) * cellWidth;
+      return (Offset(x1, y), Offset(x2, y));
+    } else {
+      final x = (edge.col + 0.5) * cellWidth;
+      final y1 = (edge.row + 0.5) * cellHeight;
+      final y2 = (edge.row + 1.5) * cellHeight;
+      return (Offset(x, y1), Offset(x, y2));
+    }
+  }
+
 
   @override
   bool shouldRepaint(covariant BoardPainter oldDelegate) => true;
