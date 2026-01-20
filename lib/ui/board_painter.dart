@@ -35,7 +35,7 @@ class BoardPainter extends CustomPainter {
     for (var r = 0; r < game.rows; r++) {
       for (var c = 0; c < game.cols; c++) {
         final cell = game.cells[r][c];
-        if (!cell.isActive) continue;
+        //if (!cell.isActive) continue;
 
         if (cell.owner != null) {
           final rect = Rect.fromLTWH(

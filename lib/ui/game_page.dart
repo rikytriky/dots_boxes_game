@@ -25,7 +25,7 @@ class _GamePageState extends State<GamePage> {
   }
 
   void _initGame() {
-    game = GameState(rows: 6, cols: 6);
+    game = GameState(rows: 8, cols: 8);
     game.gameMode = widget.mode;
     cpu = CpuPlayer(game);
   }

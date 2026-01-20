@@ -44,43 +44,43 @@ class GameState {
   void _generateEdges() {
     edges = [];
 
-    // Lati orizzontali
-    for (var r = 0; r <= rows; r++) {
-      for (var c = 0; c < cols; c++) {
-        bool topActive = r > 0 && cells[r - 1][c].isActive;
-        bool bottomActive = r < rows && cells[r][c].isActive;
+    // === Lati ORIZZONTALI ===
+    for (int r = 0; r <= rows; r++) {  // righe da 0 a rows
+      for (int c = 0; c < cols; c++) {  // colonne da 0 a cols-1
+        // Lato orizzontale esiste se supporta almeno una cella
+        bool topCell = (r > 0) && cells[r - 1][c].isActive;
+        bool bottomCell = (r < rows) && cells[r][c].isActive;
         
-        if (topActive || bottomActive) {
-          // Lato valido solo se supporta almeno una cella attiva
-          bool isValidEdge = topActive || bottomActive;
+        if (topCell || bottomCell) {
           edges.add(Edge(
-            row: r, 
-            col: c, 
+            row: r,
+            col: c,  // ← COLONNA ESATTA della cella
             isHorizontal: true,
-            isValid: isValidEdge,
+            isValid: true,
           ));
         }
       }
     }
 
-    // Lati verticali
-    for (var r = 0; r < rows; r++) {
-      for (var c = 0; c <= cols; c++) {
-        bool leftActive = c > 0 && cells[r][c - 1].isActive;
-        bool rightActive = c < cols && cells[r][c].isActive;
+    // === Lati VERTICALI ===
+    for (int r = 0; r < rows; r++) {  // righe celle da 0 a rows-1
+      for (int c = 0; c <= cols; c++) {  // colonne da 0 a cols
+        // Lato verticale esiste se supporta almeno una cella
+        bool leftCell = (c > 0) && cells[r][c - 1].isActive;
+        bool rightCell = (c < cols) && cells[r][c].isActive;
         
-        if (leftActive || rightActive) {
-          bool isValidEdge = leftActive || rightActive;
+        if (leftCell || rightCell) {
           edges.add(Edge(
-            row: r, 
-            col: c, 
+            row: r,  // ← RIGA ESATTA della cella
+            col: c,
             isHorizontal: false,
-            isValid: isValidEdge,
+            isValid: true,
           ));
         }
       }
     }
   }
+
 
   bool get isGameOver => edges.every((e) => e.owner != null);
 
@@ -120,52 +120,90 @@ class GameState {
   /// FUNZIONE CORRETTA: controlla TUTTE le celle adiacenti all'edge
   int _checkClosedSquares(Edge edge, Player player) {
     int closed = 0;
-    
-    // Per ogni edge, controlla fino a 4 celle potenzialmente influenzate
-    List<List<int>> candidateCells = [];
-    
+    final List<Cell> adjacentCells = [];
+
     if (edge.isHorizontal) {
-      // Lato orizzontale: controlla celle sopra e sotto
-      if (edge.row > 0) {
-        candidateCells.add([edge.row - 1, edge.col]);  // cella sopra
+      // Edge ORIZZONTALE (row, col, true)
+      // - Cella SOPRA: riga = edge.row - 1, colonna = edge.col
+      // - Cella SOTTO: riga = edge.row, colonna = edge.col
+      
+      // Cella sopra
+      int topRow = edge.row - 1;
+      int topCol = edge.col;
+      if (topRow >= 0 && topRow < rows && topCol >= 0 && topCol < cols) {
+        final cell = cells[topRow][topCol];
+        //if (cell.isActive) {
+          adjacentCells.add(cell);
+          //print('Edge H(${edge.row},${edge.col}) -> cella SOPRA ($topRow,$topCol)');
+        //}
       }
-      if (edge.row < rows) {
-        candidateCells.add([edge.row, edge.col]);      // cella sotto
+      
+      // Cella sotto
+      int bottomRow = edge.row;
+      int bottomCol = edge.col;
+      if (bottomRow >= 0 && bottomRow < rows && bottomCol >= 0 && bottomCol < cols) {
+        final cell = cells[bottomRow][bottomCol];
+        //if (cell.isActive) {
+          adjacentCells.add(cell);
+          //print('Edge H(${edge.row},${edge.col}) -> cella SOTTO ($bottomRow,$bottomCol)');
+        //}
       }
+      
     } else {
-      // Lato verticale: controlla celle sinistra e destra
-      if (edge.col > 0) {
-        candidateCells.add([edge.row, edge.col - 1]);  // cella sinistra
+      // Edge VERTICALE (row, col, false)
+      // - Cella SINISTRA: riga = edge.row, colonna = edge.col - 1
+      // - Cella DESTRA: riga = edge.row, colonna = edge.col
+      
+      // Cella sinistra
+      int leftRow = edge.row;
+      int leftCol = edge.col - 1;
+      if (leftRow >= 0 && leftRow < rows && leftCol >= 0 && leftCol < cols) {
+        final cell = cells[leftRow][leftCol];
+        //if (cell.isActive) {
+          adjacentCells.add(cell);
+          //print('Edge V(${edge.row},${edge.col}) -> cella SINISTRA ($leftRow,$leftCol)');
+        //}
       }
-      if (edge.col < cols) {
-        candidateCells.add([edge.row, edge.col]);      // cella destra
+      
+      // Cella destra
+      int rightRow = edge.row;
+      int rightCol = edge.col;
+      if (rightRow >= 0 && rightRow < rows && rightCol >= 0 && rightCol < cols) {
+        final cell = cells[rightRow][rightCol];
+        //if (cell.isActive) {
+          adjacentCells.add(cell);
+          //print('Edge V(${edge.row},${edge.col}) -> cella DESTRA ($rightRow,$rightCol)');
+        //}
       }
     }
-    
-    // Per ogni cella candidata, verifica se è stata chiusa DA QUESTA mossa
-    for (final cellPos in candidateCells) {
-      final r = cellPos[0];
-      final c = cellPos[1];
-      
-      if (r < 0 || r >= rows || c < 0 || c >= cols) continue;
-      final cell = cells[r][c];
-      
-      if (!cell.isActive) continue;
-      
-      // ✅ VERIFICA: quadrato chiuso SOLO DOPO questa mossa
-      if (isCellClosed(cell) && cell.owner == null) {
+
+    //print('Edge (${edge.row},${edge.col}, h=${edge.isHorizontal}) -> '
+      //    'celle adiacenti trovate: ${adjacentCells.length}');
+
+    // Controlla chiusura per ogni cella adiacente
+    for (final cell in adjacentCells) {
+      if (cell.owner != null) {
+        //print('Cella (${cell.row},${cell.col}) già assegnata a ${cell.owner}');
+        continue;
+      }
+
+      final wasClosed = isCellClosed(cell);
+      //print('Check cella (${cell.row},${cell.col}) -> chiusa? $wasClosed');
+
+      if (wasClosed) {
         cell.owner = player;
         closed++;
-        
-        // Assegna punti
+
         if (player == Player.human1) {
           player1Score++;
         } else {
           player2Score++;
         }
+        //print('*** PUNTO per $player! Cella (${cell.row},${cell.col}) ***');
       }
     }
-    
+
+    //print('=== Edge (${edge.row},${edge.col}) ha chiuso $closed celle ===\n');
     return closed;
   }
 
@@ -173,43 +211,64 @@ class GameState {
   bool isCellClosed(Cell cell) {
     final r = cell.row;
     final c = cell.col;
-    
-    final sides = _getFourSidesOfCell(r, c);
-    
-    // DEBUG: stampa per verificare
-    // print('Cell $r,$c sides: ${sides.map((e) => e?.owner ?? 'null').toList()}');
-    
-    // TUTTI i 4 lati devono esistere e avere owner
-    bool allExist = sides.every((e) => e != null);
-    bool allOwned = allExist && sides.every((e) => e!.owner != null);
-    
-    return allExist && allOwned;
+
+    // I 4 lati della cella (r,c)
+    final top = findEdge(r, c, true);         // sopra
+    final bottom = findEdge(r + 1, c, true);  // sotto
+    final left = findEdge(r, c, false);       // sinistra
+    final right = findEdge(r, c + 1, false);  // destra
+
+    // Debug dettagliato
+    //print('isCellClosed($r,$c): '
+      //    'top(${r},${c},H)=${top?.owner}, '
+        //  'bottom(${r+1},${c},H)=${bottom?.owner}, '
+          //'left(${r},${c},V)=${left?.owner}, '
+          //'right(${r},${c+1},V)=${right?.owner}');
+
+    // Se manca un lato, non chiusa
+    if (top == null || bottom == null || left == null || right == null) {
+     // print('  -> LATO MANCANTE!');
+      return false;
+    }
+
+    // Tutti e 4 devono avere owner
+    final closed = top.owner != null &&
+                  bottom.owner != null &&
+                  left.owner != null &&
+                  right.owner != null;
+
+    return closed;
   }
 
-
   Edge? findEdge(int row, int col, bool isHorizontal) {
+    // Cerca edge con coordinate ESATTE per questo lato
     try {
       return edges.firstWhere(
-        (e) => e.row == row && e.col == col && e.isHorizontal == isHorizontal,
+        (e) => e.row == row && 
+              e.col == col && 
+              e.isHorizontal == isHorizontal &&
+              e.isValid,
       );
     } catch (e) {
       return null;
     }
   }
 
+
   /// Ritorna i 4 edge di una cella (o null se non esistono)
   List<Edge?> _getFourSidesOfCell(int r, int c) {
     return [
-      // Top
+      // Top: orizzontale sopra la cella (riga r, colonna c)
       findEdge(r, c, true),
-      // Bottom  
+      // Bottom: orizzontale sotto la cella (riga r+1, colonna c)  
       findEdge(r + 1, c, true),
-      // Left
+      // Left: verticale sinistra della cella (riga r, colonna c)
       findEdge(r, c, false),
-      // Right
+      // Right: verticale destra della cella (riga r, colonna r+1)
       findEdge(r, c + 1, false),
     ];
   }
+
 
 
   List<Edge> get freeEdges => edges.where((e) => e.isValid && e.owner == null).toList();
