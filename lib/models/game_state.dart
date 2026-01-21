@@ -204,6 +204,11 @@ class GameState {
         cell.owner = player;
         closed++;
 
+        // 🎬 AVVIA ANIMAZIONE PULSAZIONE
+        cell.pulseScale = 1.3;
+        cell.pulseOpacity = 0.4;
+        cell.isAnimating = true;
+
         if (player == Player.human1) {
           player1Score++;
         } else {
@@ -278,6 +283,30 @@ class GameState {
       // RIGHT: verticale DESTRA della cella (riga r, colonna c+1)
       findEdge(r, c + 1, false),
     ];
+  }
+
+  void updateAnimations() {
+    bool hasAnimating = false;
+    for (var row in cells) {
+      for (var cell in row) {
+        if (cell.isAnimating) {
+          hasAnimating = true;
+          // Fade out pulsazione
+          cell.pulseOpacity *= 0.92;
+          cell.pulseScale *= 0.96;
+          
+          if (cell.pulseScale < 1.01 && cell.pulseOpacity < 0.02) {
+            cell.pulseScale = 1.0;
+            cell.pulseOpacity = 0.0;
+            cell.isAnimating = false;
+          }
+        }
+      }
+    }
+    // Trigger repaint se animazioni attive
+    if (hasAnimating) {
+      // GamePage chiamerà setState()
+    }
   }
 
   List<Edge> get freeEdges => edges.where((e) => e.isValid && e.owner == null).toList();

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/enums.dart';
 import '../models/game_state.dart';
@@ -17,11 +18,27 @@ class GamePage extends StatefulWidget {
 class _GamePageState extends State<GamePage> {
   late GameState game;
   late CpuPlayer cpu;
+  Timer? _animationTimer;
 
   @override
   void initState() {
     super.initState();
     _initGame();
+    _startAnimationLoop();
+  }
+
+  void _startAnimationLoop() {
+    _animationTimer?.cancel();
+    _animationTimer = Timer.periodic(Duration(milliseconds: 30), (timer) {
+      game.updateAnimations();
+      setState(() {});  // Trigger repaint
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationTimer?.cancel();
+    super.dispose();
   }
 
   void _initGame() {
@@ -349,4 +366,7 @@ class _GamePageState extends State<GamePage> {
       ),
     );
   }
+
+  
+
 }

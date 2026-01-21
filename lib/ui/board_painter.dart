@@ -45,25 +45,53 @@ class BoardPainter extends CustomPainter {
     for (var r = 0; r < game.rows; r++) {
       for (var c = 0; c < game.cols; c++) {
         final cell = game.cells[r][c];
-        //if (!cell.isActive) continue;
-
-        final rect = Rect.fromLTWH(
-            (c + 0.5) * cellWidth,
-            (r + 0.5) * cellHeight,
-            cellWidth,
-            cellHeight,
+        
+        if (cell.owner != null) {
+          // TUE coordinate esatte
+          final baseLeft = (c + 0.5) * cellWidth;
+          final baseTop = (r + 0.5) * cellHeight;
+          final baseWidth = cellWidth;
+          final baseHeight = cellHeight;
+          
+          // Applica pulsazione mantenendo centro
+          final scaledWidth = baseWidth * cell.pulseScale;
+          final scaledHeight = baseHeight * cell.pulseScale;
+          
+          // Offset per mantenere centro fisso
+          final offsetX = (baseWidth - scaledWidth) / 2;
+          final offsetY = (baseHeight - scaledHeight) / 2;
+          
+          final scaledRect = Rect.fromLTWH(
+            baseLeft + offsetX,         // ← centro orizzontale
+            baseTop + offsetY,          // ← centro verticale
+            scaledWidth,
+            scaledHeight,
           );
 
-        if (cell.owner != null) {
           final fillPaint = Paint()
+            ..color = (cell.owner == Player.human1 
+                ? Colors.red 
+                : Colors.blue)
+              .withOpacity(0.3 + cell.pulseOpacity)  // ← pulsazione brillante
+            ..style = PaintingStyle.fill;
+            
+          canvas.drawRect(scaledRect, fillPaint);
+
+          /*final fillPaint = Paint()
             ..color = cell.owner == Player.human1
                 ? Colors.red.withOpacity(0.3)
                 : Colors.blue.withOpacity(0.3)
             ..style = PaintingStyle.fill;
 
-          canvas.drawRect(rect, fillPaint);
+          canvas.drawRect(rect, fillPaint);*/
         } else {
           if (!cell.isActive) {
+            final rect = Rect.fromLTWH(
+              (c + 0.5) * cellWidth,
+              (r + 0.5) * cellHeight,
+              cellWidth,
+              cellHeight,
+            );
             canvas.drawRect(rect, inactivePaint);
           }
         }
