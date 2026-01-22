@@ -13,6 +13,9 @@ class GameState {
   int player1Score = 0;
   int player2Score = 0;
   Edge? lastPlayedEdge;  
+  // NOMI GIOCATORI
+  String player1Name = 'Giocatore 1';
+  String player2Name = 'Giocatore 2';
 
   // TIMER MODALITÀ CORSA CONTRO TEMPO
   bool isTimedMode = false;
@@ -48,7 +51,8 @@ class GameState {
     resetTimer();
   }
 
-  GameState({this.rows = 8, this.cols = 8, double? turnDuration}) {
+  GameState({this.rows = 8, this.cols = 8, double? turnDuration,this.player1Name = 'Giocatore 1',
+    this.player2Name = 'Giocatore 2',}) {
     if (turnDuration != null) {
       TURN_DURATION = turnDuration;
     }

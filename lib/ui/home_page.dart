@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/enums.dart';
 import 'game_page.dart';
+import 'player_names_dialog.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -71,10 +72,21 @@ class HomePage extends StatelessWidget {
   ) {
     return ElevatedButton.icon(
       onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => GamePage(mode: mode)),
-        );
+        if (mode == GameMode.cpu) {
+          // CPU: vai diretto al gioco
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => GamePage(mode: mode)),
+          );
+        } else {
+          // 2 Giocatori o Timed: chiedi nomi prima
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => PlayerNamesDialog(mode: mode),
+            ),
+          );
+        }
       },
       icon: Icon(icon, size: 28),
       label: Text(text, style: const TextStyle(fontSize: 20)),

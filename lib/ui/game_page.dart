@@ -8,8 +8,10 @@ import 'board_painter.dart';
 
 class GamePage extends StatefulWidget {
   final GameMode mode;
-
-  const GamePage({super.key, required this.mode});
+  final String? player1Name;
+  final String? player2Name;
+  const GamePage({super.key, required this.mode,this.player1Name,
+    this.player2Name,});
 
   @override
   State<GamePage> createState() => _GamePageState();
@@ -56,7 +58,8 @@ class _GamePageState extends State<GamePage> {
   }
 
   void _initGame() {
-    game = GameState(rows: 8, cols: 8, turnDuration: 15);
+    game = GameState(rows: 8, cols: 8, turnDuration: 15,player1Name: widget.player1Name ?? 'Giocatore 1',
+    player2Name: widget.player2Name ?? 'Giocatore 2',);
     game.gameMode = widget.mode;
     game.isTimedMode = (widget.mode == GameMode.timedMode);  // ← ATTIVA timer
     game.resetTimer();
@@ -80,8 +83,8 @@ class _GamePageState extends State<GamePage> {
         title = 'VITTORIA! 🎉';
         message = 'Hai battuto la CPU!';
       } else {
-        title = 'Giocatore 1 Vince! 🎉';
-        message = 'Complimenti al rosso!';
+        title = '${game.player1Name} Vince! 🎉';  // ← Nome
+        message = 'Complimenti!';
       }
       icon = Icons.emoji_events;
       iconColor = Colors.amber;
@@ -90,8 +93,8 @@ class _GamePageState extends State<GamePage> {
         title = 'SCONFITTA 😢';
         message = 'La CPU ti ha battuto!';
       } else {
-        title = 'Giocatore 2 Vince! 🎉';
-        message = 'Complimenti al blu!';
+        title = '${game.player2Name} Vince! 🎉';  // ← Nome
+        message = 'Complimenti!';
       }
       icon = widget.mode == GameMode.cpu ? Icons.sentiment_dissatisfied : Icons.emoji_events;
       iconColor = widget.mode == GameMode.cpu ? Colors.grey : Colors.amber;
@@ -126,9 +129,9 @@ class _GamePageState extends State<GamePage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildScoreBox('Giocatore 1', game.player1Score, Colors.red),
+                _buildScoreBox(game.player1Name, game.player1Score, Colors.red),  // ← Nome
                 _buildScoreBox(
-                  widget.mode == GameMode.cpu ? 'CPU' : 'Giocatore 2',
+                  widget.mode == GameMode.cpu ? 'CPU' : game.player2Name,  // ← Nome
                   game.player2Score,
                   Colors.blue,
                 ),
@@ -279,8 +282,10 @@ class _GamePageState extends State<GamePage> {
   @override
   Widget build(BuildContext context) {
     final currentPlayerText = game.currentPlayer == Player.human1
-        ? 'Giocatore 1 (Rosso)'
-        : (widget.mode == GameMode.cpu ? 'CPU (Blu)' : 'Giocatore 2 (Blu)');
+      ? '${game.player1Name} '
+      : (widget.mode == GameMode.cpu 
+          ? 'CPU' 
+          : '${game.player2Name} ');
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -318,14 +323,14 @@ class _GamePageState extends State<GamePage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildPlayerScore('G1', game.player1Score, Colors.red,
+                _buildPlayerScore(game.player1Name, game.player1Score, Colors.red,
                     game.currentPlayer == Player.human1),
                 Text(
                   'vs',
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 18),
                 ),
                 _buildPlayerScore(
-                  widget.mode == GameMode.cpu ? 'CPU' : 'G2',
+                  widget.mode == GameMode.cpu ? 'CPU' :  game.player2Name,
                   game.player2Score,
                   Colors.blue,
                   game.currentPlayer != Player.human1,
@@ -480,18 +485,23 @@ class _GamePageState extends State<GamePage> {
         children: [
           Text(
             label,
-            style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: color, 
+              fontSize: 16, 
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(width: 10),
           Text(
             '$score',
-            style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: Colors.white, 
+              fontSize: 24, 
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
     );
   }
-
-  
-
 }
