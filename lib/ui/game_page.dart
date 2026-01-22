@@ -19,6 +19,7 @@ class _GamePageState extends State<GamePage> {
   late GameState game;
   late CpuPlayer cpu;
   Timer? _animationTimer;
+  DateTime? _lastFrameTime;
 
   @override
   void initState() {
@@ -29,9 +30,22 @@ class _GamePageState extends State<GamePage> {
 
   void _startAnimationLoop() {
     _animationTimer?.cancel();
+    _lastFrameTime = DateTime.now();
+    
     _animationTimer = Timer.periodic(Duration(milliseconds: 30), (timer) {
+      final now = DateTime.now();
+      final deltaSeconds = now.difference(_lastFrameTime!).inMilliseconds / 1000.0;
+      _lastFrameTime = now;
+      
+      // Aggiorna animazioni celle
       game.updateAnimations();
-      setState(() {});  // Trigger repaint
+      
+      // Aggiorna timer (solo in modalità timed)
+      if (game.isTimedMode) {
+        game.updateTimer(deltaSeconds);
+      }
+      
+      setState(() {});
     });
   }
 
@@ -44,6 +58,8 @@ class _GamePageState extends State<GamePage> {
   void _initGame() {
     game = GameState(rows: 8, cols: 8);
     game.gameMode = widget.mode;
+    game.isTimedMode = (widget.mode == GameMode.timedMode);  // ← ATTIVA timer
+    game.resetTimer();
     cpu = CpuPlayer(game);
   }
 
@@ -165,9 +181,10 @@ class _GamePageState extends State<GamePage> {
   }
 
   void _onTapDown(TapDownDetails details, Size size) {
+    // Entrambi giocatori umani
     final currentIsHuman = game.currentPlayer == Player.human1 ||
-        (widget.mode == GameMode.twoPlayers && game.currentPlayer == Player.human2);
-
+                            game.currentPlayer == Player.human2;
+  
     if (!currentIsHuman || game.isGameOver) return;
 
     final edge = _detectEdgeFromTap(details.localPosition, size);
@@ -268,9 +285,23 @@ class _GamePageState extends State<GamePage> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text(widget.mode == GameMode.cpu ? 'vs CPU' : '2 Giocatori'),
+        title: Text(
+          widget.mode == GameMode.cpu 
+              ? 'vs CPU' 
+              : widget.mode == GameMode.timedMode
+                  ? 'Corsa contro il tempo'
+                  : '2 Giocatori'
+        ),
         backgroundColor: Colors.deepPurple.shade900,
         actions: [
+          // TIMER VISIVO ← NUOVO
+          if (game.isTimedMode)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Center(
+                child: _buildTimerWidget(),
+              ),
+            ),
           IconButton(
             onPressed: _restartGame,
             icon: const Icon(Icons.refresh),
@@ -323,22 +354,116 @@ class _GamePageState extends State<GamePage> {
           ),
 
           // Indicatore turno
+          // Indicatore turno + timer grande (opzionale)
           Container(
             padding: const EdgeInsets.all(16),
             color: Colors.grey.shade900,
-            child: Text(
-              game.isGameOver ? 'Partita terminata!' : 'Turno: $currentPlayerText',
-              style: TextStyle(
-                fontSize: 18,
-                color: game.currentPlayer == Player.human1 ? Colors.red : Colors.blue,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Column(
+              children: [
+                if (game.isTimedMode)
+                  _buildLargeTimer(),  // ← Timer grande sotto griglia
+                Text(
+                  game.isGameOver ? 'Partita terminata!' : 'Turno: $currentPlayerText',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: game.currentPlayer == Player.human1 ? Colors.red : Colors.blue,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
+
+
+
+
+  Widget _buildTimerWidget() {
+    final timeInt = game.timeLeft.ceil();
+    final isWarning = game.timeLeft <= 5.0;
+    final progress = game.timeLeft / GameState.TURN_DURATION;
+    
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 500),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: isWarning ? Colors.red.withOpacity(0.3 + 0.2 * (1 - progress)) : Colors.green.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isWarning ? Colors.red : Colors.green,
+          width: isWarning ? 3 : 2,  // ← bordo più spesso quando warning
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.timer,
+            color: isWarning ? Colors.red : Colors.green,
+            size: 20,
+          ),
+          SizedBox(width: 4),
+          Text(
+            '${timeInt}s',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      )
+    );
+  }
+
+  Widget _buildLargeTimer() {
+    final timeInt = game.timeLeft.ceil();
+    final isWarning = game.timeLeft <= 5.0;
+    final progress = game.timeLeft / GameState.TURN_DURATION;
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        children: [
+          // Barra progresso
+          Stack(
+            children: [
+              Container(
+                height: 8,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade800,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              FractionallySizedBox(
+                widthFactor: progress,
+                child: Container(
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: isWarning ? Colors.red : Colors.green,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 4),
+          Text(
+            '${timeInt}s rimanenti',
+            style: TextStyle(
+              color: isWarning ? Colors.red : Colors.green,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   Widget _buildPlayerScore(String label, int score, Color color, bool isActive) {
     return Container(

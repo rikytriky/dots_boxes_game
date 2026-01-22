@@ -49,6 +49,13 @@ class HomePage extends StatelessWidget {
                 Icons.people,
                 GameMode.twoPlayers,
               ),
+              const SizedBox(height: 20),
+              _buildMenuButton(
+                context,
+                'Corsa contro il tempo ⏱️',  // ← NUOVO
+                Icons.timer,
+                GameMode.timedMode,
+              ),
             ],
           ),
         ),

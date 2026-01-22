@@ -14,6 +14,40 @@ class GameState {
   int player2Score = 0;
   Edge? lastPlayedEdge;  
 
+  // TIMER MODALITÀ CORSA CONTRO TEMPO
+  bool isTimedMode = false;
+  double timeLeft = 15.0;
+  static const double TURN_DURATION = 15.0;
+
+  // Metodo per resettare timer
+  void resetTimer() {
+    timeLeft = TURN_DURATION;
+  }
+
+  // Metodo per aggiornare timer (chiamato ogni frame)
+  void updateTimer(double deltaSeconds) {
+    if (!isTimedMode) return;
+    
+    timeLeft -= deltaSeconds;
+    
+    if (timeLeft <= 0) {
+      // Tempo scaduto: punto extra all'avversario
+      _handleTimeout();
+    }
+  }
+
+  void _handleTimeout() {
+    // Punto extra al giocatore che NON ha il turno
+    if (currentPlayer == Player.human1) {
+      player2Score++;
+    } else {
+      player1Score++;
+    }
+    
+    // resetta timer
+    resetTimer();
+  }
+
   GameState({this.rows = 8, this.cols = 8}) {
     _generateGrid();
     //_generateEdges();
@@ -109,7 +143,7 @@ class GameState {
     lastPlayedEdge = edge;
     
     final closed = _checkClosedSquares(edge, player);  // ← Ora corretto
-    
+    resetTimer();
     if (closed == 0) {
       _nextPlayer();
       return false;
@@ -120,12 +154,13 @@ class GameState {
   }
 
   void _nextPlayer() {
-    if (gameMode == GameMode.twoPlayers) {
+    if (gameMode == GameMode.twoPlayers || gameMode == GameMode.timedMode) {
       currentPlayer = currentPlayer == Player.human1 ? Player.human2 : Player.human1;
     } else {
       currentPlayer = currentPlayer == Player.human1 ? Player.cpu : Player.human1;
     }
   }
+
 
   /// FUNZIONE CORRETTA: controlla TUTTE le celle adiacenti all'edge
   int _checkClosedSquares(Edge edge, Player player) {
