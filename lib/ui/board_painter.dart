@@ -18,7 +18,7 @@ class BoardPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final freeEdgePaint = Paint()
-      ..color = Colors.grey.withOpacity(0.4)
+      ..color = Colors.grey.withValues(alpha: 0.4)
       ..strokeWidth = 3.0
       ..style = PaintingStyle.stroke;
 
@@ -38,7 +38,7 @@ class BoardPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     final inactivePaint = Paint()
-      ..color = Colors.grey.shade300.withOpacity(0.5)
+      ..color = Colors.grey.shade300.withValues(alpha: 0.5)
       ..style = PaintingStyle.fill;
 
     // Disegna quadrati chiusi
@@ -72,7 +72,7 @@ class BoardPainter extends CustomPainter {
             ..color = (cell.owner == Player.human1 
                 ? Colors.red 
                 : Colors.blue)
-              .withOpacity(0.3 + cell.pulseOpacity)  // ← pulsazione brillante
+              .withValues(alpha: 0.3 + cell.pulseOpacity) // ← pulsazione brillante
             ..style = PaintingStyle.fill;
             
           canvas.drawRect(scaledRect, fillPaint);

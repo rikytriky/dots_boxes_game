@@ -56,7 +56,7 @@ class _GamePageState extends State<GamePage> {
   }
 
   void _initGame() {
-    game = GameState(rows: 8, cols: 8);
+    game = GameState(rows: 8, cols: 8, turnDuration: 15);
     game.gameMode = widget.mode;
     game.isTimedMode = (widget.mode == GameMode.timedMode);  // ← ATTIVA timer
     game.resetTimer();
@@ -165,7 +165,7 @@ class _GamePageState extends State<GamePage> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.2),
+            color: color.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: color, width: 2),
           ),
@@ -390,7 +390,7 @@ class _GamePageState extends State<GamePage> {
       duration: Duration(milliseconds: 500),
       padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: isWarning ? Colors.red.withOpacity(0.3 + 0.2 * (1 - progress)) : Colors.green.withOpacity(0.3),
+        color: isWarning ? Colors.red.withValues(alpha: 0.3 + 0.2 * (1 - progress)) : Colors.green.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isWarning ? Colors.red : Colors.green,
@@ -469,7 +469,7 @@ class _GamePageState extends State<GamePage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       decoration: BoxDecoration(
-        color: isActive ? color.withOpacity(0.2) : Colors.transparent,
+        color: isActive ? color.withValues(alpha: 0.2) : Colors.transparent,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: isActive ? color : Colors.transparent,

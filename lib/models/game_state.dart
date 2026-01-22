@@ -17,7 +17,7 @@ class GameState {
   // TIMER MODALITÀ CORSA CONTRO TEMPO
   bool isTimedMode = false;
   double timeLeft = 15.0;
-  static const double TURN_DURATION = 15.0;
+  static double TURN_DURATION = 15.0;
 
   // Metodo per resettare timer
   void resetTimer() {
@@ -48,9 +48,12 @@ class GameState {
     resetTimer();
   }
 
-  GameState({this.rows = 8, this.cols = 8}) {
+  GameState({this.rows = 8, this.cols = 8, double? turnDuration}) {
+    if (turnDuration != null) {
+      TURN_DURATION = turnDuration;
+    }
+    timeLeft = TURN_DURATION;
     _generateGrid();
-    //_generateEdges();
   }
 
   void _generateGrid() {
